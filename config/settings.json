@@ -1,0 +1,11 @@
+{
+  "loop_max_rounds": 3,
+  "verifier_strictness": "normal",
+  "search_depth": "normal",
+  "price_change_threshold": 2.0,
+  "holiday_check_enabled": true,
+  "output_format": "html",
+  "cache_ttl_days": 7,
+  "timezone": "Asia/Shanghai",
+  "trigger_time": "06:30"
+}

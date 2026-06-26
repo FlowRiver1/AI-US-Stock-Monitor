@@ -1,0 +1,60 @@
+{
+    "holdings":  [
+                     {
+                         "ticker":  "NVDA",
+                         "name":  "NVIDIA Corporation",
+                         "sector":  "semiconductor",
+                         "weight":  "high"
+                     },
+                     {
+                         "ticker":  "TSLA",
+                         "name":  "Tesla Inc.",
+                         "sector":  "ev",
+                         "weight":  "high"
+                     },
+                     {
+                         "ticker":  "GOOGL",
+                         "name":  "Alphabet Inc.",
+                         "sector":  "internet",
+                         "weight":  "high"
+                     },
+                     {
+                         "ticker":  "MU",
+                         "name":  "Micron Technology Inc.",
+                         "sector":  "semiconductor",
+                         "weight":  "high"
+                     },
+                     {
+                         "ticker":  "AVGO",
+                         "name":  "Broadcom Inc.",
+                         "sector":  "semiconductor",
+                         "weight":  "medium"
+                     },
+                     {
+                         "ticker":  "AAOI",
+                         "name":  "Applied Optoelectronics Inc.",
+                         "sector":  "optical_networking",
+                         "weight":  "medium"
+                     },
+                     {
+                         "ticker":  "MRVL",
+                         "name":  "Marvell Technology Inc.",
+                         "sector":  "semiconductor",
+                         "weight":  "medium"
+                     }
+                 ],
+    "indices":  [
+                    {
+                        "symbol":  "^IXIC",
+                        "name":  "NASDAQ Composite"
+                    },
+                    {
+                        "symbol":  "^GSPC",
+                        "name":  "S\u0026P 500"
+                    },
+                    {
+                        "symbol":  "^DJI",
+                        "name":  "Dow Jones Industrial Average"
+                    }
+                ]
+}

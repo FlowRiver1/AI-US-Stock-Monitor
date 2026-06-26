@@ -1,0 +1,381 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>持仓管理 — AI US Stock Monitor</title>
+<style>
+  :root {
+    --bg: #09090b;
+    --bg-elevated: #121215;
+    --bg-card: #18181b;
+    --bg-card-hover: #1f1f23;
+    --border: #27272a;
+    --border-hover: #3f3f46;
+    --text: #fafafa;
+    --text-secondary: #a1a1aa;
+    --text-muted: #71717a;
+    --green: #22c55e;
+    --green-dim: #166534;
+    --red: #ef4444;
+    --red-dim: #7f1d1d;
+    --amber: #f59e0b;
+    --amber-dim: #78350f;
+    --blue: #3b82f6;
+    --blue-dim: #1e3a5f;
+    --violet: #8b5cf6;
+    --violet-dim: #4c1d95;
+    --radius-sm: 8px;
+    --radius: 14px;
+    --radius-lg: 20px;
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+    --font-mono: 'JetBrains Mono', 'Fira Code', 'Consolas', monospace;
+    --shadow-sm: 0 1px 2px rgba(0,0,0,.4);
+    --shadow: 0 4px 6px -1px rgba(0,0,0,.5), 0 2px 4px -2px rgba(0,0,0,.4);
+    --shadow-lg: 0 10px 25px -5px rgba(0,0,0,.6), 0 4px 10px -6px rgba(0,0,0,.4);
+    --transition: 150ms cubic-bezier(.4,0,.2,1);
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
+  body { font-family: var(--font); background: var(--bg); color: var(--text); line-height: 1.5; min-height: 100vh; }
+  body::before {
+    content: ''; position: fixed; inset: 0; z-index: 0; pointer-events: none;
+    background: radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59,130,246,.08), transparent),
+                radial-gradient(ellipse 60% 40% at 80% 80%, rgba(139,92,246,.05), transparent);
+  }
+
+  /* Nav */
+  .nav { position: sticky; top: 0; z-index: 100; background: rgba(9,9,11,.8); backdrop-filter: blur(20px) saturate(1.5); border-bottom: 1px solid var(--border); padding: 0 20px; display: flex; justify-content: center; align-items: center; gap: 12px; height: 52px; }
+  .nav a { display: inline-flex; align-items: center; gap: 5px; padding: 7px 14px; border-radius: var(--radius-sm); color: var(--text-secondary); text-decoration: none; font-size: 13px; font-weight: 500; transition: all var(--transition); white-space: nowrap; }
+  .nav a:hover { color: var(--text); background: rgba(255,255,255,.05); }
+  .nav .nav-brand { font-size: 13px; font-weight: 600; color: var(--text); letter-spacing: -.2px; }
+  .nav .nav-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+  .nav .nav-dot.online { background: var(--green); box-shadow: 0 0 8px rgba(34,197,94,.4); }
+  .nav .nav-dot.offline { background: var(--red); }
+  .nav .nav-sep { width: 1px; height: 20px; background: var(--border); }
+
+  .container { position: relative; z-index: 1; max-width: 720px; margin: 0 auto; padding: 40px 24px 100px; }
+
+  /* Header */
+  .header { text-align: center; padding: 32px 0 40px; }
+  .header h1 { font-size: 28px; font-weight: 700; letter-spacing: -.6px; margin-bottom: 6px; }
+  .header p { color: var(--text-muted); font-size: 14px; }
+
+  /* Section */
+  .section-label { font-size: 12px; font-weight: 600; text-transform: uppercase; letter-spacing: .8px; color: var(--text-muted); margin: 36px 0 12px; padding-left: 2px; display: flex; align-items: center; gap: 8px; }
+  .section-label .count { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 22px; padding: 0 7px; border-radius: 11px; background: rgba(255,255,255,.06); color: var(--text-secondary); font-size: 11px; font-weight: 600; letter-spacing: 0; }
+
+  /* Holding Card */
+  .holding-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius); padding: 0; margin-bottom: 8px; overflow: hidden; transition: all var(--transition); }
+  .holding-card:hover { border-color: var(--border-hover); box-shadow: var(--shadow); }
+  .holding-card.removing { opacity: 0; transform: translateX(-30px) scale(.95); pointer-events: none; }
+  .holding-card-inner { display: flex; align-items: center; padding: 16px 20px; gap: 16px; }
+  .holding-card .ticker-badge {
+    display: inline-flex; align-items: center; justify-content: center; min-width: 70px; height: 40px; padding: 0 14px;
+    border-radius: var(--radius-sm); font-family: var(--font-mono); font-size: 15px; font-weight: 700; letter-spacing: .5px;
+    background: linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+    border: 1px solid rgba(255,255,255,.08);
+  }
+  .holding-card .meta { flex: 1; min-width: 0; }
+  .holding-card .company-name { font-size: 15px; font-weight: 600; color: var(--text); letter-spacing: -.2px; }
+  .holding-card .tags { display: flex; gap: 6px; margin-top: 5px; flex-wrap: wrap; }
+  .tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 5px; font-size: 11px; font-weight: 500; letter-spacing: .2px; }
+  .tag-sector { background: rgba(59,130,246,.1); color: var(--blue); }
+  .tag-weight-high { background: rgba(239,68,68,.1); color: var(--red); }
+  .tag-weight-medium { background: rgba(245,158,11,.1); color: var(--amber); }
+  .tag-weight-low { background: rgba(255,255,255,.04); color: var(--text-muted); }
+  .delete-btn {
+    display: inline-flex; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%;
+    border: 1px solid transparent; background: transparent; color: var(--text-muted); cursor: pointer; font-size: 16px; flex-shrink: 0;
+    transition: all var(--transition);
+  }
+  .delete-btn:hover { color: var(--red); background: rgba(239,68,68,.08); border-color: rgba(239,68,68,.2); }
+
+  /* Empty */
+  .empty-state { text-align: center; padding: 48px 20px; color: var(--text-muted); }
+  .empty-state .icon { font-size: 40px; margin-bottom: 12px; opacity: .4; }
+  .empty-state p { font-size: 14px; }
+
+  /* Add Form */
+  .add-card { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 28px; margin-top: 8px; position: relative; overflow: hidden; }
+  .add-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--blue), var(--violet), var(--blue)); opacity: .6; }
+  .add-card .card-title { font-size: 15px; font-weight: 600; margin-bottom: 20px; display: flex; align-items: center; gap: 6px; }
+  .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .form-grid .full { grid-column: 1 / -1; }
+  .input-group { display: flex; flex-direction: column; gap: 4px; }
+  .input-group label { font-size: 11px; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: .5px; padding-left: 2px; }
+  .input-group input, .input-group select {
+    background: var(--bg); border: 1px solid var(--border); border-radius: var(--radius-sm);
+    padding: 10px 14px; color: var(--text); font-size: 14px; font-family: var(--font); outline: none;
+    transition: border-color var(--transition), box-shadow var(--transition);
+  }
+  .input-group input:focus, .input-group select:focus { border-color: var(--blue); box-shadow: 0 0 0 3px rgba(59,130,246,.12); }
+  .input-group input::placeholder { color: var(--text-muted); }
+  .input-group select { cursor: pointer; appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%2371717a' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 32px; }
+  .ticker-input-wrapper { display: flex; gap: 8px; }
+  .ticker-input-wrapper input { font-family: var(--font-mono); font-weight: 700; letter-spacing: .5px; text-transform: uppercase; flex: 1; }
+  .lookup-indicator { font-size: 12px; padding: 0 4px; display: flex; align-items: center; gap: 4px; min-width: 90px; }
+  .lookup-indicator.found { color: var(--green); }
+  .lookup-indicator.not-found { color: var(--amber); }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; gap: 6px; padding: 10px 22px;
+    border-radius: var(--radius-sm); font-size: 14px; font-weight: 600; font-family: var(--font);
+    cursor: pointer; border: none; transition: all var(--transition); letter-spacing: -.1px;
+    white-space: nowrap;
+  }
+  .btn-primary { background: var(--blue); color: white; }
+  .btn-primary:hover { background: #2563eb; box-shadow: 0 0 0 4px rgba(59,130,246,.15); }
+  .btn-primary:disabled { opacity: .35; cursor: not-allowed; box-shadow: none; }
+  .btn-ghost { background: transparent; border: 1px solid var(--border); color: var(--text-secondary); }
+  .btn-ghost:hover { background: rgba(255,255,255,.04); color: var(--text); border-color: var(--border-hover); }
+  .btn-danger { background: var(--red); color: white; }
+  .btn-danger:hover { background: #dc2626; box-shadow: 0 0 0 4px rgba(239,68,68,.15); }
+  .hint { font-size: 12px; color: var(--text-muted); margin-top: 14px; }
+
+  /* Modal */
+  .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.75); backdrop-filter: blur(4px); z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; }
+  .modal-overlay.show { display: flex; animation: fadeIn .15s ease; }
+  .modal { background: var(--bg-card); border: 1px solid var(--border); border-radius: var(--radius-lg); padding: 32px; max-width: 400px; width: 100%; text-align: center; box-shadow: var(--shadow-lg); }
+  .modal .modal-icon { font-size: 48px; margin-bottom: 16px; }
+  .modal h3 { font-size: 18px; font-weight: 700; margin-bottom: 8px; letter-spacing: -.3px; }
+  .modal p { color: var(--text-secondary); font-size: 14px; margin-bottom: 24px; line-height: 1.6; }
+  .modal .modal-actions { display: flex; gap: 10px; justify-content: center; }
+
+  /* Toast */
+  .toast-container { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%); display: flex; flex-direction: column; gap: 8px; z-index: 300; pointer-events: none; align-items: center; }
+  .toast {
+    padding: 12px 24px; border-radius: var(--radius); font-weight: 600; font-size: 14px;
+    opacity: 0; transform: translateY(12px); transition: all .25s cubic-bezier(.4,0,.2,1);
+    box-shadow: var(--shadow-lg); display: flex; align-items: center; gap: 8px;
+  }
+  .toast.show { opacity: 1; transform: translateY(0); }
+  .toast-success { background: var(--green-dim); color: var(--green); border: 1px solid rgba(34,197,94,.3); }
+  .toast-error { background: var(--red-dim); color: var(--red); border: 1px solid rgba(239,68,68,.3); }
+  .toast-info { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(59,130,246,.3); }
+  .toast-warning { background: var(--amber-dim); color: var(--amber); border: 1px solid rgba(245,158,11,.3); }
+
+  @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .footer { text-align: center; margin-top: 60px; padding-top: 24px; border-top: 1px solid var(--border); }
+  .footer p { font-size: 12px; color: var(--text-muted); }
+
+  @media (max-width: 640px) {
+    .container { padding: 24px 16px 80px; }
+    .header h1 { font-size: 22px; }
+    .form-grid { grid-template-columns: 1fr; }
+    .holding-card-inner { padding: 14px 16px; gap: 12px; }
+    .ticker-badge { min-width: 60px; height: 34px; font-size: 13px; }
+  }
+</style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="../reports/report_2026-06-25_final.html" target="_blank">📄 最新报告</a>
+  <span class="nav-sep"></span>
+  <span class="nav-brand">持仓管理</span>
+  <span class="nav-sep"></span>
+  <a href="../reports/index.html" target="_blank">📋 报告总览</a>
+  <span style="font-size:11px;color:var(--text-muted);display:inline-flex;align-items:center;gap:6px;">
+    <span class="nav-dot" id="connDot"></span><span id="connLabel">检测中</span>
+  </span>
+</nav>
+
+<div class="container">
+  <header class="header">
+    <h1>My Portfolio</h1>
+    <p>管理你的美股持仓 · 修改即时生效</p>
+  </header>
+
+  <div class="section-label">📋 当前持仓 <span class="count" id="holdingCount">0</span></div>
+  <div id="holdingList"></div>
+  <div class="empty-state" id="emptyState" style="display:none;">
+    <div class="icon">📭</div>
+    <p>持仓为空，添加你的第一只股票</p>
+  </div>
+
+  <div class="add-card">
+    <div class="card-title">✨ 添加持仓</div>
+    <div class="form-grid">
+      <div class="input-group">
+        <label>股票代码</label>
+        <div class="ticker-input-wrapper">
+          <input type="text" id="newTicker" placeholder="GOOGL" maxlength="5" oninput="onTickerInput()" style="max-width:120px;">
+          <span class="lookup-indicator" id="lookupStatus"></span>
+        </div>
+      </div>
+      <div class="input-group">
+        <label>关注度</label>
+        <select id="newWeight">
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+          <option value="low">Low</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>公司名称</label>
+        <input type="text" id="newName" placeholder="自动获取" style="width:100%;">
+      </div>
+      <div class="input-group">
+        <label>行业</label>
+        <input type="text" id="newSector" placeholder="自动获取" style="width:100%;">
+      </div>
+      <div class="full" style="display:flex;gap:10px;align-items:center;">
+        <button class="btn btn-primary" id="addBtn" onclick="addHolding()" disabled>确认添加</button>
+        <span class="hint">输入代码自动填充 · 回车快速添加</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Confirm Modal -->
+  <div class="modal-overlay" id="confirmModal">
+    <div class="modal">
+      <div class="modal-icon">⚠️</div>
+      <h3 id="confirmTitle">确认移除</h3>
+      <p id="confirmText"></p>
+      <div class="modal-actions">
+        <button class="btn btn-ghost" onclick="closeModal()">取消</button>
+        <button class="btn btn-danger" id="confirmDeleteBtn">确认移除</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="toast-container" id="toastContainer"></div>
+  <div class="footer"><p>AI US Stock Monitor · 修改即时写入 portfolio.json</p></div>
+</div>
+
+<script>
+const DB = {"A":"Agilent Technologies Inc.|healthcare","AAOI":"Applied Optoelectronics Inc.|optical_networking","AAPL":"Apple Inc.|consumer_tech","ABNB":"Airbnb Inc.|travel","ADBE":"Adobe Inc.|enterprise_tech","ADI":"Analog Devices Inc.|semiconductor","AMD":"Advanced Micro Devices Inc.|semiconductor","AMZN":"Amazon.com Inc.|ecommerce_cloud","ANET":"Arista Networks Inc.|networking","ARM":"Arm Holdings plc|semiconductor","ASML":"ASML Holding N.V.|semiconductor","ASTS":"AST SpaceMobile Inc.|space","AVGO":"Broadcom Inc.|semiconductor","BABA":"Alibaba|ecommerce","COIN":"Coinbase Global Inc.|crypto","COST":"Costco Wholesale Corporation|retail","CRM":"Salesforce Inc.|enterprise_tech","CRWD":"CrowdStrike Holdings Inc.|cybersecurity","CSCO":"Cisco Systems Inc.|networking","DAL":"Delta Air Lines Inc.|airline","DELL":"Dell Technologies Inc.|hardware","DIS":"The Walt Disney Company|entertainment","ENPH":"Enphase Energy Inc.|solar","FSLR":"First Solar Inc.|solar","FTNT":"Fortinet Inc.|cybersecurity","GFS":"GlobalFoundries Inc.|semiconductor","GM":"General Motors Company|auto","GOOGL":"Alphabet Inc.|internet","GS":"Goldman Sachs|finance","HD":"The Home Depot Inc.|retail","HOOD":"Robinhood Markets Inc.|fintech","IBM":"IBM|enterprise_tech","INTC":"Intel Corporation|semiconductor","INTU":"Intuit Inc.|fintech","ISRG":"Intuitive Surgical Inc.|healthcare","JPM":"JPMorgan Chase & Co.|banking","KLAC":"KLA Corporation|semiconductor","LI":"Li Auto Inc.|ev","LLY":"Eli Lilly and Company|healthcare","LRCX":"Lam Research Corporation|semiconductor","LULU":"Lululemon Athletica Inc.|retail","MA":"Mastercard Incorporated|fintech","MELI":"MercadoLibre Inc.|ecommerce","META":"Meta Platforms Inc.|social_media","MRVL":"Marvell Technology Inc.|semiconductor","MSFT":"Microsoft Corporation|enterprise_tech","MU":"Micron Technology Inc.|semiconductor","NFLX":"Netflix Inc.|streaming","NIO":"NIO Inc.|ev","NKE":"NIKE Inc.|retail","NOW":"ServiceNow Inc.|enterprise_tech","NVDA":"NVIDIA Corporation|semiconductor","ORCL":"Oracle Corporation|enterprise_tech","PANW":"Palo Alto Networks Inc.|cybersecurity","PLTR":"Palantir Technologies Inc.|enterprise_tech","PYPL":"PayPal Holdings Inc.|fintech","QCOM":"QUALCOMM Incorporated|semiconductor","RBLX":"Roblox Corporation|gaming","RIVN":"Rivian Automotive Inc.|ev","RKLB":"Rocket Lab USA Inc.|aerospace","ROKU":"Roku Inc.|streaming","SHOP":"Shopify Inc.|ecommerce","SMCI":"Super Micro Computer Inc.|hardware","SNOW":"Snowflake Inc.|enterprise_tech","SOFI":"SoFi Technologies Inc.|fintech","SPOT":"Spotify Technology S.A.|streaming","SQ":"Block Inc.|fintech","TSLA":"Tesla Inc.|ev","TSM":"TSMC|semiconductor","TXN":"Texas Instruments Incorporated|semiconductor","UBER":"Uber Technologies Inc.|ride_hailing","V":"Visa Inc.|fintech","VRT":"Vertiv Holdings Co|data_center","WMT":"Walmart Inc.|retail","WOLF":"Wolfspeed Inc.|semiconductor","XPEV":"XPeng Inc.|ev","ZM":"Zoom Video Communications Inc.|enterprise_tech","ZS":"Zscaler Inc.|cybersecurity"};
+const API = 'http://localhost:8765/api/portfolio';
+let holdings = [], connected = false, pendingRemove = null, lookupTimer = null;
+
+async function checkConnection() {
+  try { const r = await fetch(API); if (r.ok) { connected = true; document.getElementById('connDot').className = 'nav-dot online'; document.getElementById('connLabel').textContent = '在线'; return true; } } catch(e) {}
+  connected = false; document.getElementById('connDot').className = 'nav-dot offline'; document.getElementById('connLabel').textContent = '离线';
+  return false;
+}
+
+async function loadPortfolio() {
+  if (!await checkConnection()) { showToast('无法连接服务，请运行 start_tools.ps1', 'warning'); return; }
+  const data = await (await fetch(API)).json();
+  holdings = data.holdings || [];
+  render();
+}
+
+function render() {
+  document.getElementById('holdingCount').textContent = holdings.length;
+  document.getElementById('emptyState').style.display = holdings.length ? 'none' : 'block';
+  document.getElementById('holdingList').innerHTML = holdings.map((h, i) => `
+    <div class="holding-card" id="row-${i}" style="animation: slideUp .25s ease both; animation-delay: ${i*.03}s;">
+      <div class="holding-card-inner">
+        <span class="ticker-badge">${h.ticker}</span>
+        <div class="meta">
+          <div class="company-name">${h.name}</div>
+          <div class="tags">
+            <span class="tag tag-sector">${h.sector||'other'}</span>
+            <span class="tag tag-weight-${h.weight}">${h.weight}</span>
+          </div>
+        </div>
+        <button class="delete-btn" onclick="confirmRemove(${i})" title="移除 ${h.ticker}">✕</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function savePortfolio() {
+  if (!connected) { showToast('未连接服务', 'error'); return false; }
+  try {
+    await fetch(API, { method: 'POST', headers: {'Content-Type':'application/json'}, body: JSON.stringify({holdings, indices:[{symbol:"^IXIC",name:"NASDAQ Composite"},{symbol:"^GSPC",name:"S&P 500"},{symbol:"^DJI",name:"Dow Jones Industrial Average"}]}) });
+    return true;
+  } catch(e) { showToast('保存失败', 'error'); return false; }
+}
+
+function confirmRemove(index) {
+  const h = holdings[index];
+  document.getElementById('confirmTitle').textContent = `移除 ${h.ticker}`;
+  document.getElementById('confirmText').textContent = `${h.name} · ${h.sector} · ${h.weight}\n\n移除后日报不再分析该股，确认继续？`;
+  pendingRemove = index;
+  document.getElementById('confirmModal').classList.add('show');
+  document.getElementById('confirmDeleteBtn').focus();
+}
+function closeModal() { document.getElementById('confirmModal').classList.remove('show'); pendingRemove = null; }
+
+document.getElementById('confirmDeleteBtn').addEventListener('click', async () => {
+  if (pendingRemove === null) return;
+  const idx = pendingRemove, removed = holdings[idx].ticker;
+  document.getElementById('row-' + idx).classList.add('removing');
+  await new Promise(r => setTimeout(r, 250));
+  holdings.splice(idx, 1); render(); closeModal();
+  if (await savePortfolio()) showToast('已移除 ' + removed, 'success');
+});
+
+function onTickerInput() {
+  const ticker = document.getElementById('newTicker').value.trim().toUpperCase();
+  document.getElementById('newTicker').value = ticker;
+  document.getElementById('lookupStatus').textContent = '';
+  document.getElementById('lookupStatus').className = 'lookup-indicator';
+  document.getElementById('addBtn').disabled = true;
+  if (!ticker) { document.getElementById('newName').value = ''; document.getElementById('newSector').value = ''; }
+  clearTimeout(lookupTimer);
+  if (ticker) lookupTimer = setTimeout(lookupTicker, 300);
+}
+
+function lookupTicker() {
+  const ticker = document.getElementById('newTicker').value.trim().toUpperCase();
+  if (!ticker) return;
+  const info = DB[ticker], el = document.getElementById('lookupStatus');
+  if (info) {
+    const [name, sector] = info.split('|');
+    document.getElementById('newName').value = name;
+    document.getElementById('newSector').value = sector;
+    el.textContent = '✓ 已识别'; el.className = 'lookup-indicator found';
+  } else {
+    document.getElementById('newName').value = ''; document.getElementById('newSector').value = '';
+    el.textContent = '手动填写'; el.className = 'lookup-indicator not-found';
+  }
+  document.getElementById('addBtn').disabled = false;
+}
+
+async function addHolding() {
+  const ticker = document.getElementById('newTicker').value.trim().toUpperCase();
+  const name = document.getElementById('newName').value.trim();
+  const sector = document.getElementById('newSector').value.trim();
+  const weight = document.getElementById('newWeight').value;
+  if (!ticker) return showToast('请输入股票代码', 'error');
+  if (!/^[A-Z]{1,5}$/.test(ticker)) return showToast('代码格式错误', 'error');
+  if (holdings.find(h => h.ticker === ticker)) return showToast(ticker + ' 已在持仓中', 'error');
+  if (!name) return showToast('请输入公司名称', 'error');
+  holdings.push({ticker, name, sector: sector||'other', weight});
+  if (await savePortfolio()) {
+    ['newTicker','newName','newSector'].forEach(id => document.getElementById(id).value = '');
+    document.getElementById('newWeight').value = 'medium';
+    document.getElementById('lookupStatus').textContent = '';
+    document.getElementById('lookupStatus').className = 'lookup-indicator';
+    document.getElementById('addBtn').disabled = true;
+    render();
+    showToast(ticker + ' 已添加', 'success');
+  } else { holdings.pop(); }
+}
+
+document.getElementById('newTicker').addEventListener('keydown', e => {
+  if (e.key === 'Enter') { e.preventDefault(); if (!document.getElementById('newName').value) lookupTicker(); else addHolding(); }
+});
+document.getElementById('confirmModal').addEventListener('click', e => { if (e.target === e.currentTarget) closeModal(); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeModal(); });
+
+function showToast(msg, type) {
+  const icons = {success:'✓',error:'✕',info:'ℹ',warning:'⚠'};
+  const t = document.createElement('div');
+  t.className = 'toast toast-' + type;
+  t.innerHTML = `<span>${icons[type]||''}</span> ${msg}`;
+  document.getElementById('toastContainer').appendChild(t);
+  requestAnimationFrame(() => t.classList.add('show'));
+  setTimeout(() => { t.classList.remove('show'); setTimeout(() => t.remove(), 250); }, 2500);
+}
+
+loadPortfolio();
+</script>
+</body>
+</html>

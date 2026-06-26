@@ -1,0 +1,17 @@
+# 数据文件
+cache/
+summaries/
+memory/history.json
+
+# 生成的报告
+reports/report_*_final.html
+reports/report_*_v*.md
+reports/report_*_verdict.json
+
+# 临时文件
+daily_report_*.md
+*.tmp
+
+# 系统文件
+.DS_Store
+Thumbs.db
