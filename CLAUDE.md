@@ -1,27 +1,29 @@
 # AI US Stock Monitor — 项目约定
 
-## 📍 当前进度 (2026-06-25)
+## 📍 当前进度 (2026-06-26)
 
 ### 已完成
-- [x] 需求梳理 & 方案设计（brainstorming 完成，见 `docs/superpowers/specs/` 下的设计文档）
-- [x] V3 方案定稿：Summarizer → Executor ↔ Verifier 循环架构
-- [x] 成本优化设计：Summarizer 浓缩 + 模型分层，月度 $6-18
-- [x] 项目骨架搭建（config/prompts/scripts/cache/summaries/memory/reports）
-- [x] 持仓配置：8 只美股（NVDA/AAPL/MSFT/TSLA/AMZN/AVGO/META/AMD）
-- [x] 三个 Prompt 编写：Summarizer(Haiku) / Executor(Sonnet) / Verifier(Sonnet)
-- [x] H5 报告 HTML 模板（暗色主题、响应式、涨跌色标注）
-- [x] 编排流程文档 `scripts/run_daily_report.md`
-- [x] 美股假期配置 `config/market_calendar.json`（2026 全年）
+- [x] 需求梳理 & V3 方案定稿：Summarizer → Executor ↔ Verifier 循环架构
+- [x] 成本优化设计：Summarizer 浓缩 + 模型分层，月度 $6-18，实测单次 ~$0.58
+- [x] 项目骨架 + 三个 Agent Prompt（summarizer/executor/verifier）
+- [x] H5 报告模板（暗色主题、响应式、涨跌色标注、日期导航栏）
+- [x] 美股假期配置（2026 全年）
+- [x] **首次全流程测试通过** — 2026-06-25 数据，2 轮循环修正（High 置信度）
+- [x] Loop Engineering 验证：Verifier 发现"美光暴跌→暴涨"事实错误 → Executor 修正 → 通过
+- [x] 持仓管理：PowerShell GUI 工具 + Web UI（增删即时生效写入 portfolio.json）
+- [x] 本地 API 服务 `portfolio_server.ps1`（localhost:8765，CORS 支持）
+- [x] 报告总览页 `reports/index.html`（日期列表、置信度统计）
+- [x] 股票自动查询（~300 只内置数据库，输入代码自动填入公司名/行业）
+- [x] 当前持仓：NVDA / TSLA / GOOGL / MU / AVGO / AAOI / MRVL（7 只）
+- [x] 已推送 GitHub：https://github.com/FlowRiver1/AI-US-Stock-Monitor
 
-### 待完成（明天继续）
-- [ ] **首次全流程测试** — 告诉我 "run daily report" 或 "运行日报"
-- [ ] 验证数据采集是否正常（web_search + WebFetch）
-- [ ] 验证 Summarizer 浓缩质量
-- [ ] 验证 Executor → Verifier 循环是否触发多轮修正
-- [ ] 验证 H5 报告渲染效果
-- [ ] 调优 Prompt（根据首次测试结果）
-- [ ] 设置每日 06:30 cron 自动触发
-- [ ] 连续跑 3-5 天，积累 history.json 趋势数据
+### 下次继续
+- [ ] 手动跑几天日报，观察归因准确性和循环触发频率
+- [ ] 根据实际效果调优 Prompt（executor/verifier）
+- [ ] 设置每日 cron 自动触发
+- [ ] 连续跑 3-5 天，积累 history.json 跨日趋势数据
+- [ ] Phase 2：H5 图表（Chart.js）+ Windows 桌面通知
+- [ ] Phase 3：X 热点发现 / 未持仓异动股票
 
 ## 项目定位
 单人使用、本地运行、零部署成本的美股持仓每日归因分析 Agent。
