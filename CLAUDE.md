@@ -23,11 +23,17 @@
 - [ ] 设置每日 cron 自动触发
 - [ ] 连续跑 3-5 天，积累 history.json 跨日趋势数据
 - [ ] Phase 2：H5 图表（Chart.js）+ Windows 桌面通知
-- [ ] Phase 3：X 热点发现 / 未持仓异动股票
+
+### 架构变更 (2026-06-29)
+- [x] 去 Summarizer：Executor/Verifier 直接读原始搜索数据，减少信息损失
+- [x] HTML 模板渲染：不用 AI 生成 HTML，改为模板替换，每次省 ~$0.20-0.30
+- [x] 新增"第一性原理"设计原则：不过度设计，文件优于服务
+- [x] Executor prompt 新增第 7 条"跨股票因果关联"规则
+- [x] 修复报告导航按钮永久置灰 bug
 
 ## 项目定位
 单人使用、本地运行、零部署成本的美股持仓每日归因分析 Agent。
-核心实践 Loop Engineering：Summarizer 浓缩 → Executor 生成 → Verifier 逐条审查 → 不通过则自动修正循环（最多 3 轮）。
+核心实践 Loop Engineering：数据采集 → Executor 生成 → Verifier 逐条审查 → 不通过则自动修正循环（最多 3 轮）。精简架构，不过度设计。
 
 ## 目录约定
 ```
@@ -53,16 +59,17 @@ reports/         ← 日报输出（HTML + user_notes）
 - 调试触发：告诉我 "run daily report --tickers NVDA,AAPL" 只分析特定持仓
 
 ## 模型分层（成本控制）
-- Summarizer：Haiku（$0.04/次，一次性）
-- Executor：Sonnet（$0.15/次/轮）
-- Verifier：Sonnet（$0.12/次/轮）
+- Executor：Sonnet（生成报告）
+- Verifier：Sonnet（审查修正）
 - 月度预算：$6-$18
+- HTML 渲染：模板替换（非 AI 生成），零成本
 
-## 核心设计原则
-1. 肥数据不进 Agent — 搜索结果必须先经 Summarizer 浓缩
-2. 查缓存再搜索 — 同日缓存复用，不重复浪费
-3. 不丢弃输出 — 就算校验不通过也输出 + 置信度标注
-4. 缓存自动清理 — 7 天前数据自动删除
+## 核心设计原则（第一性原理）
+1. **不过度设计** — 能直接做的事不加中间层。7 只股票的数据量不需要 Summarizer 浓缩
+2. **模板优于生成** — HTML 壳子是固定的，只有内容在变。不让 AI 做格式化工作
+3. **查缓存再搜索** — 同日缓存复用，不重复浪费
+4. **不丢弃输出** — 校验不通过也输出 + 置信度标注
+5. **文件优于服务** — 能不启动后台服务就不启动。持仓管理是例外（用户明确要求保留）
 
 ## 验证命令
 - 跑日报：告诉我 "run daily report"
