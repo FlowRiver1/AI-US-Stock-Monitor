@@ -1,0 +1,13 @@
+{
+  "name": "ai-us-stock-monitor-server",
+  "version": "1.0.0",
+  "description": "AI US Stock Monitor — local API server for daily report generation",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "dependencies": {
+    "express": "^5.1.0"
+  }
+}

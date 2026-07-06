@@ -1,0 +1,860 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AI US Stock Monitor</title>
+<style>
+/* === Design System: Paper Editorial Style === */
+/* Source: frontend-ui-only/app/globals.css — preserved exactly */
+
+:root {
+  --paper: #f7f4ec;
+  --paper-strong: #eee7d9;
+  --ink: #161616;
+  --muted: #6d675e;
+  --line: #dcd3c3;
+  --line-strong: #c9bda9;
+  --panel: rgba(255, 255, 255, 0.68);
+  --green: #0f7f5f;
+  --green-soft: #e3f1ea;
+  --red: #c33d41;
+  --red-soft: #f4dfdc;
+  --shadow: 0 24px 70px rgba(38, 30, 18, 0.09);
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(247, 244, 236, 0.94)),
+    radial-gradient(circle at 20% 0%, rgba(15, 127, 95, 0.12), transparent 30%),
+    var(--paper);
+  color: var(--ink);
+  font-family: "PingFang SC", "Microsoft YaHei", "Noto Sans CJK SC", ui-sans-serif, system-ui, sans-serif;
+}
+
+button, input, select { font: inherit; }
+button { cursor: pointer; }
+a { color: var(--green); font-weight: 760; }
+
+/* === Layout === */
+.shell { min-height: 100vh; }
+
+.topbar {
+  position: sticky; top: 0; z-index: 20;
+  display: flex; align-items: center; justify-content: space-between; gap: 18px;
+  padding: 18px clamp(20px, 4vw, 56px);
+  border-bottom: 1px solid rgba(220, 211, 195, 0.72);
+  background: rgba(247, 244, 236, 0.86);
+  backdrop-filter: blur(18px);
+}
+
+.brand { display: flex; align-items: center; gap: 11px; border: 0; background: transparent; color: var(--ink); font-weight: 800; }
+.brandMark { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 10px; background: var(--ink); color: var(--paper); font-size: 14px; }
+
+.topActions, .actions, .toolbar, .rowActions { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+
+/* === Buttons === */
+.ghostButton, .secondaryButton {
+  border: 1px solid var(--line-strong); border-radius: 999px;
+  background: transparent; color: var(--ink); padding: 11px 17px; font-weight: 760;
+}
+.primaryButton {
+  border: 1px solid transparent; border-radius: 999px;
+  background: var(--ink); color: white; padding: 12px 19px; font-weight: 800;
+}
+.primaryButton:disabled { opacity: 0.4; cursor: not-allowed; transform: none !important; }
+.primaryButton, .secondaryButton, .ghostButton, .providerChip, .stepCard {
+  transition: transform 160ms ease, border-color 160ms ease, background 160ms ease;
+}
+.primaryButton:hover:not(:disabled), .secondaryButton:hover, .ghostButton:hover, .providerChip:hover, .stepCard:hover {
+  transform: translateY(-1px);
+}
+
+/* === Status & Badges === */
+.status, .pill {
+  display: inline-flex; align-items: center; border-radius: 999px;
+  background: var(--paper-strong); color: var(--muted); padding: 6px 10px;
+  font-size: 12px; font-weight: 800;
+}
+.status.good { background: var(--green-soft); color: var(--green); }
+.status.error { background: var(--red-soft); color: var(--red); }
+.eyebrow { color: var(--green); font-size: 13px; font-weight: 850; letter-spacing: 0.08em; text-transform: uppercase; }
+
+/* === Hero / Intro === */
+.hero {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(420px, 1.1fr);
+  gap: clamp(28px, 5vw, 72px); align-items: center;
+  min-height: calc(100vh - 72px);
+  padding: clamp(52px, 8vw, 102px) clamp(20px, 5vw, 72px) 36px;
+}
+.hero h1 { margin: 18px 0; font-size: clamp(52px, 8vw, 96px); line-height: 0.95; letter-spacing: 0; }
+.hero p { max-width: 620px; color: var(--muted); font-size: 18px; line-height: 1.85; }
+
+.heroVisual {
+  display: grid; gap: 16px; min-height: 520px;
+  border: 1px solid var(--line); border-radius: 8px;
+  background: rgba(255, 255, 255, 0.62); box-shadow: var(--shadow); padding: 22px;
+}
+.browserDots { display: flex; gap: 7px; border-bottom: 1px solid var(--line); padding-bottom: 12px; }
+.browserDots span { width: 9px; height: 9px; border-radius: 999px; background: var(--line-strong); }
+.visualGrid { display: grid; grid-template-columns: 0.9fr 1.1fr; gap: 16px; }
+.visualPane, .reportMini, .panel, .reportPreview {
+  border: 1px solid var(--line); border-radius: 8px; background: var(--panel);
+}
+.visualPane, .reportMini { padding: 16px; }
+.visualPane h3, .panel h3 { margin: 0; font-size: 15px; }
+.miniRow { display: flex; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--line); padding: 12px 0; }
+.miniRow:last-child { border-bottom: 0; }
+.reportMini { align-self: end; }
+.reportMini span { font-family: Consolas, "SFMono-Regular", monospace; font-weight: 900; font-size: 26px; }
+.reportMini strong { float: right; font-size: 26px; }
+.reportMini p { clear: both; margin: 18px 0 0; color: var(--muted); line-height: 1.7; }
+
+.introStrip {
+  grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--line);
+}
+.introStrip div { display: grid; gap: 6px; background: rgba(255, 255, 255, 0.58); padding: 18px; }
+.introStrip span, .muted { color: var(--muted); line-height: 1.7; }
+
+/* === Workspace (Sidebar + Main) === */
+.workspace {
+  display: grid; grid-template-columns: 310px minmax(0, 1fr);
+  gap: 22px; padding: 28px clamp(20px, 5vw, 72px) 80px;
+}
+.rail { position: sticky; top: 96px; align-self: start; display: grid; gap: 20px; border-right: 1px solid var(--line); padding-right: 22px; }
+.rail h2 { margin: 8px 0; font-size: 30px; line-height: 1.12; }
+.rail p, .railNote { color: var(--muted); line-height: 1.7; }
+.stepList { display: grid; gap: 10px; }
+.stepCard {
+  display: grid; gap: 5px; width: 100%; border: 1px solid var(--line);
+  border-radius: 8px; background: rgba(255, 255, 255, 0.52); padding: 14px;
+  color: var(--ink); text-align: left;
+}
+.stepCard span { color: var(--muted); font-size: 12px; }
+.stepCard strong { font-size: 17px; }
+.stepCard.active { border-color: var(--green); background: var(--green-soft); }
+.railNote { display: grid; gap: 6px; border-top: 1px solid var(--line); padding-top: 16px; font-size: 13px; }
+.railNote strong { color: var(--ink); }
+
+.stage { display: grid; gap: 16px; min-width: 0; }
+.stageHeader { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; border-bottom: 1px solid var(--line); padding-bottom: 18px; }
+.stageHeader h1 { margin: 10px 0 8px; font-size: clamp(30px, 4vw, 54px); line-height: 1.05; }
+.stageHeader p { max-width: 700px; margin: 0; color: var(--muted); line-height: 1.7; }
+.notice {
+  border: 1px solid rgba(15, 127, 95, 0.2); border-radius: 8px;
+  background: var(--green-soft); color: #14664c; padding: 13px 15px; line-height: 1.6;
+}
+.notice.error {
+  border-color: rgba(195, 61, 65, 0.3); background: var(--red-soft); color: #8b2828;
+}
+
+/* === Panel === */
+.panel { max-width: 920px; padding: 18px; }
+.toolbar { justify-content: space-between; }
+.providerGrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 16px; }
+.providerChip {
+  border: 1px solid var(--line); border-radius: 8px;
+  background: rgba(255, 255, 255, 0.66); color: var(--muted); padding: 11px;
+}
+.providerChip.active { border-color: var(--green); background: var(--green-soft); color: var(--green); font-weight: 850; }
+.twoCol { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+.field { display: grid; gap: 7px; margin-top: 14px; }
+.field span { color: var(--muted); font-size: 12px; font-weight: 850; }
+.field input, .field select {
+  width: 100%; border: 1px solid var(--line); border-radius: 8px;
+  outline: none; background: rgba(255, 255, 255, 0.78); color: var(--ink); padding: 11px 12px;
+}
+.field input:focus, .field select:focus { border-color: var(--green); }
+
+/* === Portfolio === */
+.holdingList { margin-top: 14px; border-top: 1px solid var(--line); }
+.holdingRow { display: flex; align-items: center; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--line); padding: 14px 0; }
+.holdingRow p { margin: 4px 0 0; color: var(--muted); }
+.ticker { font-family: Consolas, "SFMono-Regular", monospace; font-size: 18px; }
+.dangerButton { border: 0; background: transparent; color: var(--red); font-weight: 760; }
+.addForm { display: flex; align-items: end; gap: 12px; margin-top: 18px; }
+.addForm .field { flex: 1; margin-top: 0; }
+.compactField { max-width: 160px; }
+
+/* === Report === */
+.reportLayout { display: grid; grid-template-columns: 340px minmax(0, 1fr); gap: 18px; }
+.sidePanel { align-self: start; }
+.portfolioDigest { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 18px; }
+.portfolioDigest span { border-radius: 999px; background: var(--paper-strong); padding: 6px 10px; font-family: Consolas, "SFMono-Regular", monospace; font-weight: 800; }
+.reportPreview { padding: 22px; }
+.reportTitle { display: flex; justify-content: space-between; align-items: flex-start; gap: 18px; border-bottom: 1px solid var(--line); padding-bottom: 16px; }
+.reportTitle h2 { margin: 8px 0 8px; font-size: 32px; }
+.reportTitle p, .reasonCard p, .stockCard p { color: var(--muted); line-height: 1.75; }
+
+.integrity { border: 1px solid var(--line); border-radius: 8px; background: rgba(255, 255, 255, 0.54); margin: 18px 0; padding: 15px; }
+.integrity div { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 12px; color: var(--muted); font-size: 13px; }
+
+.indexTable { border: 1px solid var(--line); border-radius: 8px; overflow: hidden; margin-top: 12px; }
+.indexHead, .indexRow { display: grid; grid-template-columns: 1.3fr 0.9fr 0.8fr 1.8fr; gap: 12px; align-items: center; padding: 12px 14px; }
+.indexHead { background: var(--paper-strong); color: var(--muted); font-size: 12px; font-weight: 850; }
+.indexRow { border-top: 1px solid var(--line); }
+.positive { color: var(--green); }
+.negative { color: var(--red); }
+
+.reasonList, .stockList { display: grid; gap: 12px; margin-top: 12px; }
+.reasonCard, .stockCard { border: 1px solid var(--line); border-radius: 8px; background: rgba(255, 255, 255, 0.5); padding: 14px; }
+.reasonTitle, .stockTop { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; }
+.reasonTitle { justify-content: flex-start; }
+.reasonBadge { flex: 0 0 auto; border-radius: 5px; background: var(--paper-strong); color: var(--muted); padding: 4px 7px; font-size: 12px; font-weight: 850; }
+.reasonBadge.primary { background: var(--red-soft); color: var(--red); }
+.stockTop h4 { margin: 0 0 4px; font-size: 26px; }
+.stockTop p { margin: 0; }
+.stockTop strong { font-size: 28px; }
+.priceLine { margin: 14px 0; font-size: 13px; }
+.observation { border-left: 3px solid var(--line-strong); padding-left: 10px; }
+
+/* === Report History Table === */
+.historyList { display: grid; gap: 8px; }
+.historyRow {
+  display: flex; justify-content: space-between; align-items: center;
+  border: 1px solid var(--line); border-radius: 8px;
+  background: rgba(255, 255, 255, 0.52); padding: 14px 18px;
+  transition: transform 160ms ease, border-color 160ms ease;
+}
+.historyRow:hover { border-color: var(--green); transform: translateY(-1px); }
+.historyRow .date { font-weight: 800; font-size: 15px; }
+.historyRow .meta { display: flex; gap: 10px; align-items: center; }
+
+/* === Modal === */
+.modalBackdrop {
+  position: fixed; inset: 0; z-index: 50;
+  display: grid; place-items: center;
+  background: rgba(22, 22, 22, 0.34); backdrop-filter: blur(12px); padding: 22px;
+}
+.modal {
+  width: min(920px, 100%); max-height: min(780px, calc(100vh - 44px));
+  overflow: auto; border: 1px solid var(--line); border-radius: 10px;
+  background: #fbfaf5; box-shadow: 0 28px 90px rgba(20, 17, 12, 0.25);
+  padding: clamp(22px, 4vw, 36px);
+}
+.modalTop { display: flex; justify-content: space-between; align-items: center; }
+.closeButton { display: grid; width: 36px; height: 36px; place-items: center; border: 1px solid var(--line); border-radius: 999px; background: rgba(255, 255, 255, 0.72); color: var(--ink); }
+.modal h2 { margin: 14px 0 10px; font-size: clamp(28px, 4vw, 48px); }
+.lead { max-width: 700px; color: var(--muted); font-size: 17px; line-height: 1.8; }
+.explainGrid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1px; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; background: var(--line); }
+.explainGrid article { background: rgba(255, 255, 255, 0.7); padding: 18px; }
+.explainGrid span { color: var(--green); font-size: 12px; font-weight: 900; }
+.explainGrid h3 { margin: 8px 0; }
+.explainGrid p { margin: 0; color: var(--muted); line-height: 1.75; }
+
+/* === Progress bar === */
+.progressBar { width: 100%; height: 6px; border-radius: 3px; background: var(--line); margin: 12px 0; overflow: hidden; }
+.progressBar .fill { height: 100%; background: var(--green); border-radius: 3px; transition: width 0.4s ease; }
+
+/* === Loading spinner === */
+.spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--line); border-top-color: var(--green); border-radius: 50%; animation: spin 0.6s linear infinite; margin-right: 8px; vertical-align: middle; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* === Responsive === */
+@media (max-width: 980px) {
+  .hero, .workspace, .reportLayout, .introStrip, .explainGrid { grid-template-columns: 1fr; }
+  .heroVisual { min-height: auto; }
+  .rail { position: static; border-right: 0; border-bottom: 1px solid var(--line); padding-right: 0; padding-bottom: 18px; }
+  .stageHeader { flex-direction: column; }
+  .integrity div { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (max-width: 680px) {
+  .topActions { display: none; }
+  .visualGrid, .providerGrid, .twoCol, .integrity div { grid-template-columns: 1fr; }
+  .addForm, .holdingRow, .reportTitle { align-items: stretch; flex-direction: column; }
+  .compactField { max-width: none; }
+  .indexHead, .indexRow { grid-template-columns: 1fr; }
+  .hero h1 { font-size: 44px; }
+}
+
+/* === Hidden === */
+.hidden { display: none !important; }
+
+/* === Raw report HTML container === */
+.raw-report { max-width: 920px; }
+.raw-report h2 { font-size: 20px; margin: 24px 0 12px; }
+.raw-report h3 { font-size: 16px; margin: 18px 0 8px; }
+.raw-report table { width: 100%; border-collapse: collapse; margin: 12px 0; }
+.raw-report th, .raw-report td { border: 1px solid var(--line); padding: 8px 12px; text-align: left; }
+.raw-report th { background: var(--paper-strong); }
+.raw-report ul, .raw-report ol { padding-left: 20px; }
+.raw-report a { color: var(--green); }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <!-- Top Bar -->
+  <header class="topbar">
+    <button class="brand" onclick="navigate('intro')">
+      <span class="brandMark">AI</span>
+      <span>AI US Stock Monitor</span>
+    </button>
+    <div class="topActions">
+      <span class="status" id="apiStatus">API 未配置</span>
+      <button class="ghostButton" onclick="showHowItWorks()">它如何工作</button>
+    </div>
+  </header>
+
+  <!-- View: Intro -->
+  <section id="view-intro" class="hero">
+    <div class="heroCopy">
+      <span class="eyebrow">Loop Engineering Daily Brief</span>
+      <h1>AI US Stock Monitor</h1>
+      <p>面向个人美股投资者的持仓日报工具。配置你的模型 API 和持仓后，系统自动采集市场数据，通过 AI 多轮校验生成专业归因日报。</p>
+      <div class="actions" style="margin-top:24px">
+        <button class="primaryButton" onclick="startSetup()">开始使用</button>
+        <button class="secondaryButton" onclick="showHowItWorks()">了解它如何工作</button>
+      </div>
+    </div>
+    <div class="heroVisual" aria-hidden="true">
+      <div class="browserDots"><span></span><span></span><span></span></div>
+      <div class="visualGrid">
+        <div class="visualPane"><h3>配置状态</h3>
+          <div class="miniRow"><span>DeepSeek</span><strong id="heroApiStatus">未配置</strong></div>
+          <div class="miniRow"><span>Portfolio</span><strong id="heroPortfolioCount">0 只</strong></div>
+          <div class="miniRow"><span>日报</span><strong>待生成</strong></div>
+        </div>
+        <div class="visualPane"><h3>报告结构</h3>
+          <div class="miniRow"><span>大盘概览</span><strong>来源可查</strong></div>
+          <div class="miniRow"><span>板块脉搏</span><strong>优先归因</strong></div>
+          <div class="miniRow"><span>持仓个股</span><strong>逐只解释</strong></div>
+        </div>
+      </div>
+      <div class="reportMini"><span>NVDA</span><strong class="negative">-1.40%</strong><p>半导体板块联动 → 个股消息 → 来源链接 → Verifier 校验 → 跨股关联标注</p></div>
+    </div>
+    <div class="introStrip">
+      <div><strong>1. 配置 API</strong><span>录入模型供应商、Base URL、模型名和 API Key</span></div>
+      <div><strong>2. 管理持仓</strong><span>新增、删除 ticker，确认关注程度和行业</span></div>
+      <div><strong>3. 生成日报</strong><span>数据采集 → Executor 生成 → Verifier 校验 → 修正循环</span></div>
+    </div>
+  </section>
+
+  <!-- View: Workspace (setup / portfolio / report) -->
+  <section id="view-workspace" class="workspace hidden">
+    <aside class="rail">
+      <div>
+        <span class="eyebrow">Guided Setup</span>
+        <h2 id="progressTitle">准备中</h2>
+        <p>配置 API Key 和持仓列表后即可一键生成日报。</p>
+      </div>
+      <div class="stepList">
+        <button class="stepCard" id="stepCard-setup" onclick="navigate('setup')"><span id="stepBadge-setup">待处理</span><strong>配置 API</strong></button>
+        <button class="stepCard" id="stepCard-portfolio" onclick="navigate('portfolio')"><span id="stepBadge-portfolio">待处理</span><strong>管理持仓</strong></button>
+        <button class="stepCard" id="stepCard-report" onclick="navigate('report')"><span id="stepBadge-report">待处理</span><strong>生成日报</strong></button>
+      </div>
+      <div class="railNote">
+        <strong>核心流程</strong>
+        <span>Phase 0 板块脉搏 → Phase 1 数据采集 → Executor 生成 → Verifier 校验（最多 3 轮修正）→ HTML 报告</span>
+      </div>
+    </aside>
+
+    <section class="stage">
+      <!-- Setup Panel -->
+      <div id="panel-setup" class="hidden">
+        <div class="stageHeader">
+          <div><span class="pill">第 1 步 / 3</span><h1>配置模型 API</h1><p>录入你的 DeepSeek API Key。使用 Anthropic 兼容端点，默认配置已填好。</p></div>
+          <button class="secondaryButton" onclick="navigate('intro')">返回介绍</button>
+        </div>
+        <div id="setupNotice" class="notice">API Key 仅存储在本地服务器，不会上传到任何第三方。</div>
+        <div class="panel">
+          <div class="toolbar"><h3>模型 API 配置</h3><span class="status" id="setupStatus">等待录入</span></div>
+          <div class="twoCol">
+            <label class="field"><span>Base URL</span><input id="input-baseUrl" value="https://api.deepseek.com/anthropic"></label>
+            <label class="field"><span>Model</span><input id="input-model" value="deepseek-v4-pro"></label>
+          </div>
+          <label class="field"><span>API Key</span><input id="input-apiKey" type="password" placeholder="sk-..."></label>
+          <div class="actions" style="margin-top:18px">
+            <button class="primaryButton" onclick="saveApiConfig()">保存配置</button>
+            <button class="secondaryButton" onclick="testApiConnection()">测试连接</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Portfolio Panel -->
+      <div id="panel-portfolio" class="hidden">
+        <div class="stageHeader">
+          <div><span class="pill">第 2 步 / 3</span><h1>管理持仓</h1><p>添加需要分析的美股持仓。代码自动补全公司名和行业。</p></div>
+          <button class="secondaryButton" onclick="navigate('intro')">返回介绍</button>
+        </div>
+        <div id="portfolioNotice" class="notice">点击"生成日报"后将触发完整的数据采集和 AI 分析流程。</div>
+        <div class="panel">
+          <div class="toolbar"><h3>持仓管理</h3><span class="status good" id="portfolioCount">0 只股票</span></div>
+          <div class="holdingList" id="holdingList"></div>
+          <form class="addForm" onsubmit="addHolding(event)">
+            <label class="field"><span>股票代码</span><input id="input-ticker" placeholder="NVDA" maxlength="5" oninput="lookupStock()"></label>
+            <label class="field compactField"><span>关注程度</span><select id="input-weight"><option value="high">high</option><option value="medium" selected>medium</option><option value="low">low</option></select></label>
+            <button class="primaryButton" type="submit">添加</button>
+          </form>
+          <div id="lookupHint" style="margin-top:8px;font-size:13px;color:var(--muted)"></div>
+          <div class="actions" style="margin-top:18px">
+            <button class="primaryButton" onclick="navigate('report')">持仓确认，去生成日报</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Report Panel -->
+      <div id="panel-report" class="hidden">
+        <div class="stageHeader">
+          <div><span class="pill">第 3 步 / 3</span><h1>生成日报</h1><p>点击按钮触发完整日报生成流程。过程约需 30-60 秒。</p></div>
+          <button class="secondaryButton" onclick="navigate('intro')">返回介绍</button>
+        </div>
+        <div id="reportNotice" class="notice">生成日报会依次执行：交易日判断 → 板块脉搏 → 数据采集 → AI 分析 → 校验修正 → HTML 输出。</div>
+        <div class="reportLayout">
+          <section class="panel sidePanel">
+            <div class="toolbar"><h3>生成日报</h3></div>
+            <button class="primaryButton" id="btnGenerate" onclick="generateReport()" style="width:100%;margin:12px 0">⚡ 生成最新日报</button>
+            <div id="generateProgress" class="hidden">
+              <div class="progressBar"><div class="fill" id="progressFill" style="width:0%"></div></div>
+              <p class="muted" id="progressLabel" style="font-size:13px"></p>
+            </div>
+            <div class="portfolioDigest" id="reportPortfolioTags"></div>
+
+            <h3 style="margin-top:24px">历史报告</h3>
+            <div class="historyList" id="historyList"><p class="muted">加载中...</p></div>
+          </section>
+
+          <div id="reportContent">
+            <article class="reportPreview">
+              <div class="reportTitle"><div><span class="eyebrow">日报预览</span><h2>准备就绪</h2><p>点击左侧"生成最新日报"开始</p></div></div>
+              <p class="muted">生成的日报将在此处显示。包含大盘概览、板块脉搏、持仓个股归因、跨股关联分析和数据完整性声明。</p>
+            </article>
+          </div>
+        </div>
+      </div>
+    </section>
+  </section>
+
+  <!-- How It Works Modal -->
+  <div id="modal-how" class="modalBackdrop hidden" onclick="hideHowItWorks()">
+    <section class="modal" role="dialog" aria-modal="true" onclick="event.stopPropagation()">
+      <div class="modalTop"><span class="eyebrow">Product Overview</span><button class="closeButton" onclick="hideHowItWorks()" aria-label="关闭">x</button></div>
+      <h2>它是做什么的？</h2>
+      <p class="lead">它不是交易软件，是一个每日复盘助手：把用户持仓、大盘变化、行业新闻、公司消息和 AI 校验整理成一份中文归因日报。</p>
+      <div class="explainGrid">
+        <article><span>01</span><h3>用户输入</h3><p>用户提供模型 API Key 和持仓列表。</p></article>
+        <article><span>02</span><h3>数据采集</h3><p>Phase 0 板块脉搏 + Phase 1 价格新闻 + Phase 2 深搜。</p></article>
+        <article><span>03</span><h3>AI 分析</h3><p>Executor 生成报告 → Verifier 逐条审查 → 不通过则自动修正（最多 3 轮）。</p></article>
+        <article><span>04</span><h3>日报输出</h3><p>大盘归因、板块脉搏、个股卡片、跨股关联、来源链接、数据完整性。</p></article>
+      </div>
+      <div class="actions" style="margin-top:24px">
+        <button class="primaryButton" onclick="hideHowItWorks();startSetup()">开始配置</button>
+        <button class="secondaryButton" onclick="hideHowItWorks()">继续查看</button>
+      </div>
+    </section>
+  </div>
+</div>
+
+<script>
+// ===== Data =====
+const STOCKS = {
+  AAPL:{name:"Apple Inc.",sector:"消费科技"},AAOI:{name:"Applied Optoelectronics Inc.",sector:"光通信"},
+  AMD:{name:"Advanced Micro Devices Inc.",sector:"半导体"},AMZN:{name:"Amazon.com Inc.",sector:"云计算/电商"},
+  AVGO:{name:"Broadcom Inc.",sector:"半导体"},GOOGL:{name:"Alphabet Inc.",sector:"互联网"},
+  META:{name:"Meta Platforms Inc.",sector:"社交媒体"},MRVL:{name:"Marvell Technology Inc.",sector:"半导体"},
+  MSFT:{name:"Microsoft Corporation",sector:"企业软件"},MU:{name:"Micron Technology Inc.",sector:"半导体"},
+  NVDA:{name:"NVIDIA Corporation",sector:"半导体"},PLTR:{name:"Palantir Technologies Inc.",sector:"企业软件"},
+  TSLA:{name:"Tesla Inc.",sector:"电动车"},INTC:{name:"Intel Corporation",sector:"半导体"},
+  QCOM:{name:"QUALCOMM Incorporated",sector:"半导体"},CRM:{name:"Salesforce Inc.",sector:"企业软件"},
+  ADBE:{name:"Adobe Inc.",sector:"企业软件"},NFLX:{name:"Netflix Inc.",sector:"流媒体"},
+  DIS:{name:"Walt Disney Co.",sector:"娱乐"},BAC:{name:"Bank of America Corp.",sector:"金融"},
+  JPM:{name:"JPMorgan Chase & Co.",sector:"金融"},WMT:{name:"Walmart Inc.",sector:"零售"}
+};
+
+// ===== State =====
+let state = {
+  activeStep: 'intro',
+  config: { baseUrl: 'https://api.deepseek.com/anthropic', model: 'deepseek-v4-pro', connected: false },
+  portfolio: [],
+  reports: [],
+  generating: false
+};
+
+// ===== Navigation =====
+function navigate(step) {
+  state.activeStep = step;
+  render();
+}
+
+function startSetup() {
+  if (state.config.connected) { navigate('portfolio'); } else { navigate('setup'); }
+}
+
+// ===== Render =====
+function render() {
+  const viewIntro = document.getElementById('view-intro');
+  const viewWorkspace = document.getElementById('view-workspace');
+
+  if (state.activeStep === 'intro') {
+    viewIntro.classList.remove('hidden');
+    viewWorkspace.classList.add('hidden');
+  } else {
+    viewIntro.classList.add('hidden');
+    viewWorkspace.classList.remove('hidden');
+  }
+
+  // Panels
+  ['setup','portfolio','report'].forEach(id => {
+    document.getElementById('panel-' + id).classList.toggle('hidden', state.activeStep !== id);
+  });
+
+  // Step cards
+  ['setup','portfolio','report'].forEach(id => {
+    const card = document.getElementById('stepCard-' + id);
+    card.classList.toggle('active', state.activeStep === id);
+  });
+  document.getElementById('stepBadge-setup').textContent = state.config.connected ? '已完成' : '待处理';
+  document.getElementById('stepBadge-portfolio').textContent = state.portfolio.length > 0 ? '已完成' : '待处理';
+  document.getElementById('stepBadge-report').textContent = '待生成';
+
+  // Progress
+  const done = (state.config.connected ? 1 : 0) + (state.portfolio.length > 0 ? 1 : 0);
+  document.getElementById('progressTitle').textContent = `还差 ${Math.max(0, 2 - done)} 步`;
+
+  // Top bar
+  const apiSt = document.getElementById('apiStatus');
+  apiSt.textContent = state.config.connected ? 'API 已配置' : 'API 未配置';
+  apiSt.className = state.config.connected ? 'status good' : 'status';
+
+  // Hero stats
+  document.getElementById('heroApiStatus').textContent = state.config.connected ? '已配置' : '未配置';
+  document.getElementById('heroPortfolioCount').textContent = state.portfolio.length + ' 只';
+
+  // Setup panel
+  document.getElementById('setupStatus').textContent = state.config.connected ? '已保存' : '等待录入';
+  document.getElementById('setupStatus').className = state.config.connected ? 'status good' : 'status';
+
+  // Portfolio panel
+  document.getElementById('portfolioCount').textContent = state.portfolio.length + ' 只股票';
+  renderHoldingList();
+  renderReportTags();
+}
+
+function renderHoldingList() {
+  const list = document.getElementById('holdingList');
+  list.innerHTML = state.portfolio.map((h, i) => `
+    <div class="holdingRow">
+      <div><strong class="ticker">${h.ticker}</strong><p>${h.name} · ${h.sector}</p></div>
+      <div class="rowActions"><span class="pill">${h.weight}</span><button class="dangerButton" onclick="removeHolding(${i})">移除</button></div>
+    </div>
+  `).join('');
+}
+
+function renderReportTags() {
+  document.getElementById('reportPortfolioTags').innerHTML = state.portfolio.map(h => `<span>${h.ticker}</span>`).join('');
+}
+
+// ===== API Calls =====
+async function api(path, opts = {}) {
+  const url = path.startsWith('http') ? path : path;
+  const res = await fetch(url, {
+    headers: { 'Content-Type': 'application/json', ...opts.headers },
+    ...opts
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text.slice(0, 300));
+  }
+  return res;
+}
+
+// ===== Config =====
+async function loadConfig() {
+  try {
+    const res = await api('/api/config');
+    const data = await res.json();
+    state.config = { ...state.config, ...data };
+    document.getElementById('input-baseUrl').value = data.baseUrl;
+    document.getElementById('input-model').value = data.model;
+    render();
+  } catch (e) { console.log('Config not loaded:', e.message); }
+}
+
+async function saveApiConfig() {
+  const baseUrl = document.getElementById('input-baseUrl').value.trim();
+  const model = document.getElementById('input-model').value.trim();
+  const apiKey = document.getElementById('input-apiKey').value.trim();
+
+  if (!apiKey) { showNotice('setup', '请输入 API Key', true); return; }
+
+  try {
+    const res = await api('/api/config', {
+      method: 'POST',
+      body: JSON.stringify({ apiKey, baseUrl, model })
+    });
+    state.config = { baseUrl, model, connected: true };
+    render();
+    showNotice('setup', 'API 配置已保存');
+    setTimeout(() => navigate('portfolio'), 500);
+  } catch (e) { showNotice('setup', '保存失败: ' + e.message, true); }
+}
+
+async function testApiConnection() {
+  const apiKey = document.getElementById('input-apiKey').value.trim();
+  const baseUrl = document.getElementById('input-baseUrl').value.trim();
+  if (!apiKey) { showNotice('setup', '请先输入 API Key', true); return; }
+
+  // Save first, then test
+  try {
+    await api('/api/config', { method: 'POST', body: JSON.stringify({ apiKey, baseUrl, model: document.getElementById('input-model').value.trim() }) });
+  } catch {}
+
+  try {
+    const res = await api('/api/config/test', { method: 'POST' });
+    const data = await res.json();
+    if (data.ok) {
+      state.config.connected = true;
+      render();
+      showNotice('setup', '✅ API 连接成功！');
+    } else {
+      showNotice('setup', '❌ ' + data.message, true);
+    }
+  } catch (e) { showNotice('setup', '测试失败: ' + e.message, true); }
+}
+
+// ===== Portfolio =====
+async function loadPortfolio() {
+  try {
+    const res = await api('/api/portfolio');
+    const data = await res.json();
+    state.portfolio = data.holdings || [];
+    render();
+  } catch (e) { console.log('Portfolio not loaded:', e.message); }
+}
+
+async function savePortfolioToServer() {
+  await api('/api/portfolio', {
+    method: 'POST',
+    body: JSON.stringify({ holdings: state.portfolio })
+  });
+}
+
+function lookupStock() {
+  const ticker = document.getElementById('input-ticker').value.trim().toUpperCase();
+  const hint = document.getElementById('lookupHint');
+  if (ticker && STOCKS[ticker]) {
+    hint.textContent = `${STOCKS[ticker].name} · ${STOCKS[ticker].sector}`;
+  } else if (ticker) {
+    hint.textContent = '未在数据库中，可手动添加';
+  } else {
+    hint.textContent = '';
+  }
+}
+
+function addHolding(e) {
+  e.preventDefault();
+  const ticker = document.getElementById('input-ticker').value.trim().toUpperCase();
+  const weight = document.getElementById('input-weight').value;
+
+  if (!/^[A-Z]{1,5}$/.test(ticker)) { showNotice('portfolio', '请输入 1-5 位美股代码', true); return; }
+  if (state.portfolio.some(h => h.ticker === ticker)) { showNotice('portfolio', ticker + ' 已在持仓列表中', true); return; }
+
+  const found = STOCKS[ticker];
+  state.portfolio.push({ ticker, name: found?.name || ticker, sector: found?.sector || '其他', weight });
+  document.getElementById('input-ticker').value = '';
+  document.getElementById('lookupHint').textContent = '';
+
+  savePortfolioToServer().catch(() => {});
+  render();
+  showNotice('portfolio', ticker + ' 已添加');
+}
+
+function removeHolding(idx) {
+  state.portfolio.splice(idx, 1);
+  savePortfolioToServer().catch(() => {});
+  render();
+}
+
+// ===== Report Generation =====
+async function generateReport() {
+  if (state.generating) return;
+  if (!state.config.connected) { showNotice('report', '请先配置 API Key', true); navigate('setup'); return; }
+  if (state.portfolio.length === 0) { showNotice('report', '请先添加持仓', true); navigate('portfolio'); return; }
+
+  state.generating = true;
+  document.getElementById('btnGenerate').disabled = true;
+  document.getElementById('btnGenerate').innerHTML = '<span class="spinner"></span> 生成中...';
+  document.getElementById('generateProgress').classList.remove('hidden');
+  document.getElementById('progressFill').style.width = '10%';
+  document.getElementById('progressLabel').textContent = '启动日报生成流程...';
+
+  try {
+    const res = await fetch('/api/report/generate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({})
+    });
+
+    const reader = res.body.getReader();
+    const decoder = new TextDecoder();
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+
+      buffer += decoder.decode(value, { stream: true });
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (!line.startsWith('data: ')) continue;
+        try {
+          const event = JSON.parse(line.slice(6));
+          handleSSEEvent(event);
+        } catch {}
+      }
+    }
+  } catch (e) {
+    showNotice('report', '日报生成失败: ' + e.message, true);
+  }
+
+  state.generating = false;
+  document.getElementById('btnGenerate').disabled = false;
+  document.getElementById('btnGenerate').textContent = '⚡ 生成最新日报';
+  document.getElementById('generateProgress').classList.add('hidden');
+  loadReports();
+}
+
+function handleSSEEvent(event) {
+  const { type, label, message, step, report, stack } = event;
+
+  if (type === 'step') {
+    document.getElementById('progressLabel').textContent = `${step || ''} ${label || ''}`;
+    const pct = step === 0 ? 5 : step === 1 ? 20 : step === 2 ? 40 : step === 3 ? 85 : step === 4 ? 95 : 50;
+    document.getElementById('progressFill').style.width = pct + '%';
+  } else if (type === 'info') {
+    document.getElementById('progressLabel').textContent = message;
+  } else if (type === 'warning') {
+    showNotice('report', message);
+  } else if (type === 'error') {
+    const trace = stack ? ' | ' + stack : '';
+    showNotice('report', '❌ ' + message + trace, true);
+  } else if (type === 'done') {
+    document.getElementById('progressFill').style.width = '100%';
+    document.getElementById('progressLabel').textContent = '✅ 日报已生成！' + (report ? ` (置信度: ${report.confidence}, ${report.rounds}轮)` : '');
+    showNotice('report', '日报生成完成！置信度: ' + (report?.confidence || 'N/A'));
+
+    // Render the report
+    if (report) renderGeneratedReport(report);
+  }
+}
+
+function renderGeneratedReport(report) {
+  const container = document.getElementById('reportContent');
+
+  // Embed the full HTML report inline via iframe — keeps consistent styling
+  const reportUrl = `/reports/report_${report.tradingDay}_final.html`;
+  const integrity = [
+    `校验: ${report.rounds} 轮`,
+    `置信度: ${report.confidence}`,
+    `耗时: ${report.elapsed}s`
+  ];
+
+  container.innerHTML = `
+    <article class="reportPreview" style="padding:0;overflow:hidden">
+      <div style="padding:18px 22px 0">
+        <div class="reportTitle">
+          <div>
+            <span class="eyebrow">${report.dateCN || report.tradingDay}</span>
+            <h2>📊 美股持仓日报</h2>
+            <p>AI 自动生成 · ${integrity.join(' · ')}</p>
+          </div>
+          <span class="status good">${report.confidence}</span>
+        </div>
+      </div>
+      <iframe src="${reportUrl}" style="width:100%;height:80vh;border:none;background:var(--paper)"
+        onload="this.style.height=(this.contentWindow.document.body.scrollHeight+60)+'px'"
+      ></iframe>
+    </article>`;
+}
+
+// ===== Reports History =====
+async function loadReports() {
+  try {
+    const res = await api('/api/reports');
+    state.reports = await res.json();
+    renderReportsHistory();
+  } catch (e) { console.log('Reports not loaded:', e.message); }
+}
+
+function renderReportsHistory() {
+  const list = document.getElementById('historyList');
+  if (state.reports.length === 0) {
+    list.innerHTML = '<p class="muted">暂无历史报告</p>';
+    return;
+  }
+
+  list.innerHTML = state.reports.map(r => {
+    const cls = r.nasdaq_change >= 0 ? 'positive' : 'negative';
+    const sign = r.nasdaq_change >= 0 ? '+' : '';
+    return `
+      <div class="historyRow" style="cursor:pointer" onclick="loadReportDetail('${r.date}')">
+        <div><span class="date">${r.date}</span></div>
+        <div class="meta">
+          <span class="${cls}">NASDAQ ${sign}${r.nasdaq_change?.toFixed(2) || '?'}%</span>
+          <span class="status good">${r.confidence || '?'}</span>
+        </div>
+      </div>
+    `;
+  }).join('');
+}
+
+async function loadReportDetail(date) {
+  const container = document.getElementById('reportContent');
+  const reportUrl = `/reports/report_${date}_final.html`;
+
+  container.innerHTML = `
+    <article class="reportPreview" style="padding:0;overflow:hidden">
+      <div style="padding:18px 22px 0">
+        <div class="reportTitle">
+          <div>
+            <span class="eyebrow">${date}</span>
+            <h2>📊 美股持仓日报</h2>
+            <p>历史报告</p>
+          </div>
+        </div>
+      </div>
+      <iframe src="${reportUrl}" style="width:100%;height:80vh;border:none;background:var(--paper)"
+        onload="this.style.height=(this.contentWindow.document.body.scrollHeight+60)+'px'"
+      ></iframe>
+    </article>`;
+}
+
+// ===== Helpers =====
+function showNotice(section, message, isError) {
+  const panelId = 'panel-' + section;
+  const panel = document.getElementById(panelId);
+  if (!panel) return;
+  let notice = panel.querySelector('.notice');
+  if (!notice) {
+    notice = document.createElement('div');
+    notice.className = 'notice';
+    panel.insertBefore(notice, panel.firstChild);
+  }
+  notice.className = 'notice' + (isError ? ' error' : '');
+  notice.textContent = message;
+  setTimeout(() => { if (notice.textContent === message) notice.className = 'notice'; }, 5000);
+}
+
+function showHowItWorks() {
+  document.getElementById('modal-how').classList.remove('hidden');
+}
+function hideHowItWorks() {
+  document.getElementById('modal-how').classList.add('hidden');
+}
+
+// ===== Init =====
+loadConfig();
+loadPortfolio();
+loadReports();
+render();
+</script>
+
+</body>
+</html>
