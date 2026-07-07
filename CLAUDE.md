@@ -1,13 +1,20 @@
 # AI US Stock Monitor — 项目约定
 
-## 📍 当前进度 (2026-07-03)
+## 📍 当前进度 (2026-07-07)
 
 ### 已完成
-- [x] 需求梳理 & V3 方案定稿：Summarizer → Executor ↔ Verifier 循环架构
-- [x] 成本优化设计 + 项目骨架 + 三个 Agent Prompt
-- [x] H5 报告模板（暗色主题、响应式、涨跌色标注、日期导航栏）
-- [x] 美股假期配置（2026 全年）
-- [x] 首次全流程测试通过（2026-06-25）+ Loop Engineering 验证
+- [x] 需求梳理 & V3 方案定稿 → 产品化改造完成
+- [x] 所有核心能力：Executor↔Verifier 循环、Phase 0 板块脉搏、跨股关联
+- [x] **Node.js 独立日报引擎** — 不依赖 Claude Code，用户自带 API Key
+- [x] **Paper 设计系统** — 前端 SPA + 报告模板统一纸白风格
+- [x] **飞书妙搭部署** — 免登陆公开访问 (app_179njw8pczs)
+- [x] **README.md** — 完整项目介绍 + 架构文档
+- [x] 当前持仓：NVDA / TSLA / GOOGL / MU / AVGO / AAOI / MRVL（7 只）
+- [x] 已推送 GitHub：https://github.com/FlowRiver1/AI-US-Stock-Monitor
+
+### 在线体验
+- 妙搭：https://vwxx9iaco8c.aiforce.cloud/app/app_179njw8pczs
+- 本地：`start.ps1` → http://localhost:8765
 - [x] 持仓管理：PowerShell GUI + Web UI（localhost:8765）
 - [x] 报告总览页 `reports/index.html`
 - [x] 股票自动查询数据库（~300 只）
