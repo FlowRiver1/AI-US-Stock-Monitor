@@ -20,6 +20,10 @@
   --green-soft: #e3f1ea;
   --red: #c33d41;
   --red-soft: #f4dfdc;
+  --up: #c33d41;
+  --up-soft: #f4dfdc;
+  --down: #0f7f5f;
+  --down-soft: #e3f1ea;
   --shadow: 0 24px 70px rgba(38, 30, 18, 0.09);
 }
 
@@ -198,8 +202,8 @@ a { color: var(--green); font-weight: 760; }
 .indexHead, .indexRow { display: grid; grid-template-columns: 1.3fr 0.9fr 0.8fr 1.8fr; gap: 12px; align-items: center; padding: 12px 14px; }
 .indexHead { background: var(--paper-strong); color: var(--muted); font-size: 12px; font-weight: 850; }
 .indexRow { border-top: 1px solid var(--line); }
-.positive { color: var(--green); }
-.negative { color: var(--red); }
+.positive { color: var(--up); }
+.negative { color: var(--down); }
 
 .reasonList, .stockList { display: grid; gap: 12px; margin-top: 12px; }
 .reasonCard, .stockCard { border: 1px solid var(--line); border-radius: 8px; background: rgba(255, 255, 255, 0.5); padding: 14px; }

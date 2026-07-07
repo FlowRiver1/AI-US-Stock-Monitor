@@ -1,0 +1,78 @@
+{
+  "round": 1,
+  "passed": false,
+  "overall_assessment": "报告诚实地声明当日无新闻数据，但随后为每只持仓和指数给出的「归因」均以历史趋势、价格形态等非 digest 来源为基础，违反了“来源可追溯”的核心规则，导致几乎所有分析缺乏可靠的事实依据。",
+  "confidence": "low",
+  "issues": [
+    {
+      "section": "大盘概览",
+      "original_text": "1. 技术性超跌反弹 — 来源：基于历史趋势（SOX 两日暴跌 11%）推断  2. 宏观预期修复 — 来源：基于历史趋势（“6月非农仅+5.7万远低于预期加息预期降温”）推断",
+      "issue_type": "source_missing",
+      "severity": "high",
+      "explanation": "digest 中没有当日关于大盘的任何催化剂来源，归因中引用的“历史趋势”并非 digest 内的条目，导致归因不可验证。",
+      "suggestion": "改为说明：因无当日具体新闻事件，大盘反弹的具体驱动无法确认，仅能提供行情描述与历史背景参考。"
+    },
+    {
+      "section": "NVDA 个股分析",
+      "original_text": "主要原因 — 卖压衰竭后的弱反弹...来源：历史趋势（\"跌破$200支撑\"、\"AI资本开支见顶恐慌\"——推测性归因）",
+      "issue_type": "source_missing",
+      "severity": "high",
+      "explanation": "digest 中无 NVDA 当日新闻，归因引用的历史趋势不属于 digest 来源，实质性缺少可追溯的因果基础。",
+      "suggestion": "删除该归因，描述日内走势（如高开低走、与 AVGO 对比等），并明确说明因无新闻无法归因具体催化剂。"
+    },
+    {
+      "section": "TSLA 个股分析",
+      "original_text": "主要原因 — 情绪修复下的报复性反弹...来源：历史趋势（\"Q2交付大超预期但-7.8%为11个月最大跌幅\"——推测性归因）",
+      "issue_type": "source_missing",
+      "severity": "high",
+      "explanation": "digest 中无 TSLA 当日新闻，归因完全依赖历史事件推断，缺乏当日可查证的驱动因素。",
+      "suggestion": "保留价格行为描述，删除基于历史新闻的归因，声明当日无新消息，上涨可能由技术性买盘驱动，具体原因无法确认。"
+    },
+    {
+      "section": "GOOGL 个股分析",
+      "original_text": "主要原因 — 防御性吸引力 + 超跌反弹...来源：历史趋势（\"反垄断三重打击仅微跌0.36%展现防御性\"、\"P/E 27.55为科技股中偏合理\"——推测性归因）",
+      "issue_type": "source_missing",
+      "severity": "high",
+      "explanation": "digest 中无 GOOGL 当日新闻，归因引用的历史趋势非 digest 来源，不具备可追溯性。",
+      "suggestion": "说明因无新闻，涨幅可能与大盘同步有关，不宜给出具体催化剂。"
+    },
+    {
+      "section": "MU 个股分析",
+      "original_text": "主要原因 — 技术性修复后遭卖压：受存储板块整体超跌（上期“两日-15.5%”）及非农数据后利率预期缓和的影响...来源：历史趋势（\"两日-15.5%存储板块系统性抛售\"、\"Burry做空增加不确定性\"——推测性归因）",
+      "issue_type": "source_missing",
+      "severity": "high",
+      "explanation": "digest 中无 MU 当日新闻，归因所引用的上期报告摘要和宏观叙事均非 digest 内的直接来源。",
+      "suggestion": "改为客观描述高开低走的盘面特征，并说明因无当日相关新闻，反弹与回落的驱动无法确定。"
+    },
+    {
+      "section": "AVGO 个股分析",
+      "original_text": "主要原因 — 超跌深度修正后的弹性反抽...来源：历史趋势（\"定制ASIC叙事(Jalapeño/Google TPU)提供差异化支撑\"——推测性归因）",
+      "issue_type": "source_missing",
+      "severity": "high",
+      "explanation": "当日无 AVGO 相关 digest 来源，归因引用历史叙事而非当日事实，缺乏可追溯性。",
+      "suggestion": "描述其领涨表现，但指出因无新闻，上涨可能源于技术性买盘或板块轮动，具体原因不明。"
+    },
+    {
+      "section": "AAOI 个股分析",
+      "original_text": "主要原因 — 高 Beta 下的双向波动...来源：历史趋势（\"β最高+未盈利导致在避险中首当其冲\"——推测性归因）",
+      "issue_type": "source_missing",
+      "severity": "high",
+      "explanation": "digest 无 AAOI 新闻，归因仅基于历史描述，未提供任何当日可验证的驱动因素。",
+      "suggestion": "仅描述日内大幅波动，承认因无新闻无法解释具体催化，高波动符合其历史特性。"
+    },
+    {
+      "section": "MRVL 个股分析",
+      "original_text": "主要原因 — 跟随板块反弹但信心不足...来源：历史趋势（\"P/E 93x+3客户占AR 75%导致最脆弱\"——推测性归因）",
+      "issue_type": "source_missing",
+      "severity": "high",
+      "explanation": "当日无 MRVL digest 来源，归因引用的估值和客户集中度分析非 digest 条目，无法满足可追溯性要求。",
+      "suggestion": "描述高开低走形态，声明因无新闻，涨幅可能来自板块反弹后卖压，不宜给出带叙事色彩的归因。"
+    }
+  ],
+  "positive_notes": [
+    "报告在开头明确并诚实声明了数据缺失、无当日新闻，避免了编造新闻来源。",
+    "对 MU 和 MRVL 高开低走的价格特征观察准确，属于有价值的技术型描述。",
+    "跨股关联分析（如 AI 硬件内部轮换、存储疲弱与 NVDA 的联动）展现了系统性思维。",
+    "推测性语言使用得当，多处标注“推测性归因”降低了误导风险。"
+  ]
+}

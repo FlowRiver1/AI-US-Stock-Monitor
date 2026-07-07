@@ -51,8 +51,8 @@
   .market-table { width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 15px; border: 1px solid var(--line); border-radius: 10px; overflow: hidden; }
   .market-table th { text-align: left; padding: 12px 16px; background: var(--paper-strong); color: var(--muted); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
   .market-table td { padding: 14px 16px; border-top: 1px solid var(--line); font-variant-numeric: tabular-nums; }
-  .positive { color: var(--green); font-weight: 700; }
-  .negative { color: var(--red); font-weight: 700; }
+  .positive { color: var(--red); font-weight: 700; }
+  .negative { color: var(--green); font-weight: 700; }
 
   .attr-list { list-style: none; padding: 0; counter-reset: attr; }
   .attr-list li { border: 1px solid var(--line); border-radius: 10px; background: rgba(255,255,255,0.5); padding: 16px 20px; margin-bottom: 12px; position: relative; }
@@ -65,19 +65,25 @@
   .stock-top .change { font-size: 26px; font-weight: 700; }
   .stock-meta { display: flex; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; font-size: 13px; color: var(--muted); }
 
-  .reason-list { list-style: none; padding: 0; }
-  .reason-list li { padding: 10px 0; border-bottom: 1px solid rgba(0,0,0,0.04); font-size: 14px; line-height: 1.7; }
-  .reason-list li:last-child { border-bottom: none; }
+  .reason-list { list-style: none; padding: 0; display: grid; gap: 0; }
+  .reason-item { padding: 12px 0; border-bottom: 1px solid var(--line); }
+  .reason-item:last-child { border-bottom: none; }
+  .reason-header { margin-bottom: 6px; }
+  .reason-body { font-size: 14px; line-height: 1.75; }
+  .source-info { font-size: 12px; color: var(--muted); margin-top: 6px; }
+  .pill { display: inline-block; padding: 2px 8px; border-radius: 999px; background: var(--paper-strong); color: var(--muted); font-size: 11px; font-weight: 700; margin-left: 6px; }
 
   .tag { display: inline-block; padding: 2px 8px; border-radius: 5px; font-size: 11px; font-weight: 800; margin-right: 6px; }
   .tag-primary { background: var(--red-soft); color: var(--red); }
   .tag-secondary { background: rgba(15,127,95,0.1); color: var(--green); }
+  .tag-positive { background: rgba(15,127,95,0.1); color: var(--green); }
 
-  .cross-stock { background: rgba(251,191,36,0.08); border-left: 3px solid #b8860b; padding: 10px 14px; margin: 12px 0; font-size: 13px; border-radius: 0 8px 8px 0; }
+  .trend-note { background: rgba(109,103,94,0.05); border-radius: 8px; padding: 12px 16px; margin-top: 14px; font-size: 13px; color: var(--muted); line-height: 1.7; }
+  .cross-stock { background: rgba(251,191,36,0.08); border-left: 3px solid #b8860b; padding: 10px 14px; margin: 12px 0; font-size: 13px; border-radius: 0 8px 8px 0; line-height: 1.7; }
 
-  .trend-badge { display: inline-block; padding: 6px 14px; border-radius: 8px; font-size: 13px; font-weight: 600; margin-top: 12px; }
-  .trend-up { background: var(--green-soft); color: var(--green); }
-  .trend-down { background: var(--red-soft); color: var(--red); }
+  .watch-section { font-size: 14px; line-height: 1.8; }
+  .watch-item { margin-bottom: 8px; }
+  .market-drivers { font-size: 14px; line-height: 1.8; color: var(--ink); }
 
   .disclaimer { margin-top: 48px; padding: 20px; border-radius: 10px; background: rgba(0,0,0,0.02); border: 1px solid rgba(0,0,0,0.04); font-size: 12px; color: var(--muted); text-align: center; line-height: 1.8; }
   .footer { text-align: center; margin-top: 24px; font-size: 12px; color: var(--muted); }
@@ -121,14 +127,10 @@
 
 {{WATCHLIST_SECTION}}
 
-<div class="disclaimer">
-  ⚠️ 本报告由 AI Agent 自动生成，所有归因分析基于公开信息整合，仅供参考，不构成投资建议。<br>
-  数据来源可能存在延迟或遗漏。投资者应独立判断并承担投资风险。<br>
-  生成时间：{{GENERATED_AT}} · AI US Stock Monitor · Loop Engineering Agent
-</div>
+{{DISCLAIMER}}
 
 <div class="footer">
-  Powered by AI US Stock Monitor · v2.0
+  生成时间：{{GENERATED_AT}} · AI US Stock Monitor · Loop Engineering Agent
 </div>
 
 </body>

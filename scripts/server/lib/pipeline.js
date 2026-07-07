@@ -5,6 +5,7 @@
 const fs = require('fs');
 const path = require('path');
 const { callDeepSeek, callDeepSeekJSON } = require('./deepseek-client');
+const { parseReportToHTML } = require('./report-parser');
 const {
   fetchAllPrices,
   fetchAllNews,
@@ -281,10 +282,7 @@ async function generateReport(targetDate, projectRoot, config, emit) {
   const nextDate = getNextTradingDay(tradingDay);
 
   // Convert markdown report to HTML sections for template
-  const marketTable = buildMarketTableHTML(marketIndexData);
-  const marketAttr = buildMarketAttributionHTML(report);
-  const stockCards = buildStockCardsHTML(report, allPrices);
-  const watchlist = buildWatchlistHTML(report);
+  const parsed = parseReportToHTML(report, allPrices);
 
   // Template substitution
   const confidenceLabel = finalConfidence === 'high'
@@ -304,10 +302,11 @@ async function generateReport(targetDate, projectRoot, config, emit) {
     .replace(/\{\{FETCH_COUNT\}\}/g, String(Object.keys(allPrices).length))
     .replace(/\{\{TRADING_DAY\}\}/g, tradingDay)
     .replace(/\{\{LOOP_ROUNDS\}\}/g, String(allVerdicts.length))
-    .replace(/\{\{MARKET_TABLE\}\}/g, marketTable)
-    .replace(/\{\{MARKET_ATTRIBUTION\}\}/g, marketAttr)
-    .replace(/\{\{STOCK_CARDS\}\}/g, stockCards)
-    .replace(/\{\{WATCHLIST_SECTION\}\}/g, watchlist)
+    .replace(/\{\{MARKET_TABLE\}\}/g, parsed.marketTable)
+    .replace(/\{\{MARKET_ATTRIBUTION\}\}/g, parsed.marketAttribution)
+    .replace(/\{\{STOCK_CARDS\}\}/g, parsed.stockCards)
+    .replace(/\{\{WATCHLIST_SECTION\}\}/g, parsed.watchlist)
+    .replace(/\{\{DISCLAIMER\}\}/g, parsed.disclaimer)
     .replace(/\{\{MISSING_DATA_SECTION\}\}/g, '')
     .replace(/\{\{GENERATED_AT\}\}/g, new Date().toLocaleString('zh-CN', { timeZone: 'Asia/Shanghai' }) + ' 北京时间');
 
@@ -416,7 +415,7 @@ function buildStockCardsHTML(report, prices) {
             <span>收盘 $${(priceData?.price || 0).toFixed(2)}</span>
             <span>最低 $${(priceData?.low || 0).toFixed(2)}</span>
           </div>
-          <div class="reason-list">${match[0]}</div>
+          <div class="reason-list">${mdToHTML(match[0])}</div>
         </div>
       `);
     }
