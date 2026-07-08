@@ -1,23 +1,35 @@
 # AI US Stock Monitor — 项目约定
 
-## 📍 当前进度 (2026-07-07)
+## 📍 当前进度 (2026-07-08)
 
 ### 已完成
-- [x] 需求梳理 & V3 方案定稿 → 产品化改造完成
-- [x] 所有核心能力：Executor↔Verifier 循环、Phase 0 板块脉搏、跨股关联
-- [x] **Node.js 独立日报引擎** — 不依赖 Claude Code，用户自带 API Key
-- [x] **Paper 设计系统** — 前端 SPA + 报告模板统一纸白风格
-- [x] **飞书妙搭部署** — 免登陆公开访问 (app_179njw8pczs)
-- [x] **README.md** — 完整项目介绍 + 架构文档
-- [x] 当前持仓：NVDA / TSLA / GOOGL / MU / AVGO / AAOI / MRVL（7 只）
-- [x] 已推送 GitHub：https://github.com/FlowRiver1/AI-US-Stock-Monitor
+- [x] Executor↔Verifier 循环 + Phase 0 板块脉搏 + 跨股关联
+- [x] Paper 设计系统（前端 SPA + 报告模板统一纸白风格）
+- [x] 妙搭静态部署 (app_179njw8pczs) — 仅演示 UI
+- [x] Node.js 本地版全功能可用 (`node server.js`)
+- [x] GitHub: https://github.com/FlowRiver1/AI-US-Stock-Monitor
 
-### 在线体验
-- 妙搭：https://vwxx9iaco8c.aiforce.cloud/app/app_179njw8pczs
-- 本地：`start.ps1` → http://localhost:8765
-- [x] 持仓管理：PowerShell GUI + Web UI（localhost:8765）
-- [x] 报告总览页 `reports/index.html`
-- [x] 股票自动查询数据库（~300 只）
+### 进行中：纯浏览器方案部署
+**目标**：用户打开网页即可使用全功能，无需安装任何东西。
+
+**架构决策**（经专家咨询确认）：
+```
+前端（纯静态 HTML）— 任意托管（妙搭/GitHub Pages）
+  ├─ DeepSeek API → 浏览器直连（已确认支持 CORS）
+  ├─ Yahoo Finance → Cloudflare Workers 代理（几行代码转发 + CORS）
+  ├─ API Key → 用户自己录入，存 localStorage
+  └─ 报告 → 浏览器端 JS 生成 + localStorage 持久化
+```
+
+**为什么是 Cloudflare Workers 而非妙搭全栈**：
+- 妙搭全栈是 NestJS+React 模板，外部 Express 代码无法直接适配
+- Cloudflare Workers 只需几行代码，纯转发，永久免费
+- 妙搭继续托管前端静态页
+
+### 待办
+- [ ] 注册 Cloudflare 账号，部署 Worker 代理
+- [ ] 前端改造：Node.js → 浏览器 JS（localStorage 替代 fs）
+- [ ] 端到端测试：浏览器生成日报，对比本地版确认质量一致
 - [x] 当前持仓：NVDA / TSLA / GOOGL / MU / AVGO / AAOI / MRVL（7 只）
 - [x] 去 Summarizer：Executor/Verifier 直接读原始搜索数据
 - [x] HTML 模板渲染替代 AI 生成（每次省 ~$0.20-0.30）

@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html><body>
+<h2>CORS Test</h2>
+<div id="result"></div>
+<script>
+const r = document.getElementById('result');
+
+async function test(url, name) {
+  try {
+    const res = await fetch(url);
+    const text = await res.text();
+    r.innerHTML += `<p>✅ ${name}: HTTP ${res.status} (${text.slice(0,80)}...)</p>`;
+  } catch(e) {
+    r.innerHTML += `<p>❌ ${name}: ${e.message}</p>`;
+  }
+}
+
+async function run() {
+  r.innerHTML += '<p>Testing...</p>';
+  await test('https://query1.finance.yahoo.com/v8/finance/chart/NVDA?range=1d&interval=1d', 'Yahoo Finance');
+  await test('https://api.deepseek.com/anthropic/v1/messages', 'DeepSeek (POST test needs manual)');
+  r.innerHTML += '<p>✅ Done. Yahoo test shows if CORS allows browser fetch.</p>';
+}
+run();
+</script>
+</body></html>
