@@ -292,6 +292,9 @@ a { color: var(--green); font-weight: 760; }
 </head>
 <body>
 
+<div id="deployBanner" class="hidden" style="background:rgba(251,191,36,0.1);border-bottom:1px solid #b8860b;text-align:center;padding:8px;font-size:13px;color:#8b6914">
+  📺 这是演示页面。完整功能请本地运行 <code style="background:rgba(0,0,0,0.05);padding:2px 6px;border-radius:4px">node server.js</code> → <a href="http://localhost:8765" style="color:var(--green)">localhost:8765</a> · <a href="https://github.com/FlowRiver1/AI-US-Stock-Monitor" target="_blank" style="color:var(--green)">GitHub</a>
+</div>
 <div class="shell">
   <!-- Top Bar -->
   <header class="topbar">
@@ -455,6 +458,9 @@ a { color: var(--green); font-weight: 760; }
 </div>
 
 <script>
+// ===== Environment Detection =====
+const isLocal = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1';
+
 // ===== Data =====
 const STOCKS = {
   AAPL:{name:"Apple Inc.",sector:"消费科技"},AAOI:{name:"Applied Optoelectronics Inc.",sector:"光通信"},
@@ -554,7 +560,14 @@ function renderReportTags() {
 }
 
 // ===== API Calls =====
+function checkLocal() {
+  if (!isLocal) {
+    throw new Error('这是演示页面。完整功能（API 测试、日报生成）需本地运行服务器。\n详见 GitHub README。');
+  }
+}
+
 async function api(path, opts = {}) {
+  checkLocal();
   const url = path.startsWith('http') ? path : path;
   const res = await fetch(url, {
     headers: { 'Content-Type': 'application/json', ...opts.headers },
@@ -854,6 +867,15 @@ function hideHowItWorks() {
 }
 
 // ===== Init =====
+if (!isLocal) {
+  document.getElementById('deployBanner').classList.remove('hidden');
+  // Disable buttons that need backend
+  document.querySelectorAll('.primaryButton').forEach(b => {
+    if (b.textContent.includes('测试') || b.textContent.includes('生成') || b.textContent.includes('保存配置')) {
+      b.title = '演示版不支持此操作';
+    }
+  });
+}
 loadConfig();
 loadPortfolio();
 loadReports();
